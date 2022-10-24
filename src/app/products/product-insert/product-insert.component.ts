@@ -11,7 +11,10 @@ import { exhaustMap } from 'rxjs/operators';
   templateUrl: './product-insert.component.html',
   styleUrls: ['./product-insert.component.css']
 })
-export class ProductInsertComponent implements OnInit {
+export class ProductInsertComponent implements OnInit, AfterViewInit {
+
+
+  @ViewChild('form') form: ElementRef;
 
   insertForm: FormGroup;
   name: FormControl;
@@ -25,19 +28,21 @@ export class ProductInsertComponent implements OnInit {
     private router: Router
   ) { }
 
-  onSubmit() {
-    const newProduct = this.insertForm.value;
-    console.log(newProduct);
-    this
-      .productService
-      .insertProduct(newProduct)
-      .subscribe(
-        product => {
-          console.log('Product saved with id: ' + product.id);
-          this.productService.initProducts();
-          this.router.navigateByUrl('/products');
-        },
-        error => console.log('Could not save product: ' + error)
+  ngAfterViewInit(): void {
+    fromEvent(this.form.nativeElement, 'submit')
+      .pipe(
+        exhaustMap(() => this
+          .productService
+          .insertProduct(this.insertForm.value))
+      )
+      .subscribe({
+          next: (product) => {
+            console.log('Product saved with id: ' + product.id);
+            this.productService.initProducts();
+            this.router.navigateByUrl('/products');
+          },
+          error: (error) => console.log('Could not save product: ' + error)
+        }
       )
   }
 
